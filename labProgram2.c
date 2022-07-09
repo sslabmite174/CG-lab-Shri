@@ -65,14 +65,14 @@ void myInit()
  glutInitWindowPosition(0,0);
  if(choice==1)
 {
-  glutCreateWindow("rotation of a triangle w.r.t origin,4MT19CS129");
+  glutCreateWindow("rotation of a triangle w.r.t origin");
   glutDisplayFunc(display_about_origin);
 }
 else if(choice==2)
 {
  printf("enter the pivot (x,y) point\n");
  scanf("%f%f",&h,&k);
- glutCreateWindow("rotation of a triangle w.r.t fixed point ,4MT19CS129");
+ glutCreateWindow("rotation of a triangle w.r.t fixed point");
  glutDisplayFunc(display_about_fixed_point);
 }
 else
