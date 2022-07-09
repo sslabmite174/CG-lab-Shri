@@ -72,7 +72,7 @@ void main(int argc, char* argv[]){
 	glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
 	glutInitWindowPosition(0, 0);
 	glutInitWindowSize(400,400);
-	glutCreateWindow("4MT19CS154_P1_[m=infinite]");	
+	glutCreateWindow("Brenham‟s line drawing algorithm");	
 	myInit();
 	glutDisplayFunc(myDisplay);
 	glutMainLoop();	
