@@ -1,71 +1,77 @@
 #include<stdio.h>
 #include<GL/glut.h>
-
-float v[8][3]={	{-100,-100,100},
-		{100,-100,100},
-		{100,100,100},
-		{-100,100,100},
-		{-100,-100,-100},
-		{100,-100,-100},
-		{100,100,-100},
-		{-100,100,-100},
-		};
-		
-float viewer[3]={0.0,0.0,500};
-
-void keys(unsigned char k, int x, int y){
-	if(k=='x') viewer[0]-=10.0;
-	if(k=='X') viewer[0]+=10.0;
-	if(k=='y') viewer[1]+=10.0;
-	if(k=='Y') viewer[1]-=10.0;
-	if(k=='z') viewer[2]+=10.0;
-	if(k=='Z') viewer[2]-=10.0;
-	glutPostRedisplay();
+void tableLeg(double thick, double len){
+	glPushMatrix();
+	glTranslated(0, len/2, 0);
+	glScaled(thick, len, thick);
+	glutSolidCube(1.0);
+	glPopMatrix();
 }
 
-void drawcube(GLfloat *a, GLfloat *b, GLfloat *c, GLfloat *d){
-	glBegin(GL_POLYGON);
-	glVertex3fv(a);
-	glVertex3fv(b);
-	glVertex3fv(c);
-	glVertex3fv(d);
-	glEnd();
+void table(double topWid, double topThick, double legThick, double legLen){
+	glPushMatrix();
+	glTranslated(0, legLen, 0);
+	glScaled(topWid, topThick, topWid);
+	glutSolidCube(1.0);
+	glPopMatrix();
+	double dist = 0.95*topWid/2.0-legThick/2.0;
+	glPushMatrix();
+	glTranslated(dist, 0, dist);
+	tableLeg(legThick, legLen);
+	glTranslated(0.0, 0.0, -2*dist);
+	tableLeg(legThick, legLen);
+	glTranslated(-2*dist, 0, 2*dist);
+	tableLeg(legThick, legLen);
+	glTranslated(0.0, 0.0, -2*dist);
+	tableLeg(legThick, legLen);
+	glPopMatrix();
 }
 
-void display(){
-	glClearColor(0.0,0.0,0.0,0.0);
-	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+void displaySolid(void){
+	GLfloat mat_ambient[] = {0.7f, 0.7f, 0.7f, 0.7f};
+	GLfloat mat_diffuse[] = {0.5f, 0.5f, 0.5f, 0.5f};
+	GLfloat mat_specular[] = {1.0f, 1.0f, 1.0f, 1.0f};
+	GLfloat mat_shininess[] = {50.0f};
+	glMaterialfv(GL_FRONT,GL_AMBIENT,mat_ambient);
+	glMaterialfv(GL_FRONT,GL_DIFFUSE,mat_diffuse);
+	glMaterialfv(GL_FRONT,GL_SPECULAR,mat_specular);
+	glMaterialfv(GL_FRONT,GL_SHININESS,mat_shininess);
+	GLfloat lightIntensity[] = {0.7f, 0.7f, 0.7f, 0.7f};
+	GLfloat light_position[] = {2.0f, 6.0f, 3.0f, 0.0f};
+	glLightfv(GL_LIGHT0, GL_POSITION, light_position);
+	glLightfv(GL_LIGHT0, GL_DIFFUSE, lightIntensity);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	glFrustum(-200,200,-200,200,200,800);
+	glOrtho(-2.0,2.0,-1.0,1.0,0.1,100);
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
-	gluLookAt(viewer[0], viewer[1], viewer[2], 0, 0, 0, 0, 1, 0);
-	glColor3f(1.0,0.6,0.3);
-	drawcube(v[0],v[1],v[2],v[3]);
-	glColor3f(1.0,0.7,0.3);
-	drawcube(v[1],v[5],v[6],v[2]);
-	glColor3f(1.0,0.0,0.0);
-	drawcube(v[3],v[2],v[6],v[7]);
-	glColor3f(0.0,1.0,0.0);
-	drawcube(v[4],v[5],v[1],v[0]);
-	glColor3f(0.0,0.0,1.0);
-	drawcube(v[7],v[6],v[5],v[4]);
-	glColor3f(1.0,1.0,0.3);
-	drawcube(v[3],v[7],v[4],v[0]);
+	gluLookAt(2.3, 1.3, 2.0, 0.0, 0.25, 0.0, 0.0, 1.0, 0.0);
+	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+	glPushMatrix();
+	glTranslated(0.53,0.41,0.5);
+	glRotated(30,0,1,0);
+	glutSolidTeapot(0.08);
+	glPopMatrix();
+	glPushMatrix();
+	glTranslated(0.4, 0, 0.4);
+	table(0.6, 0.02, 0.02, 0.3);
+	glPopMatrix();
 	glFlush();
 }
 
-void main(int argc, char *argv[]){ 
+int main(int argc, char *argv[]){
 	glutInit(&argc, argv);
-	glutInitDisplayMode(GLUT_SINGLE|GLUT_RGB | GLUT_DEPTH);
-	glutInitWindowPosition(10,10);
-	glutInitWindowSize(500,500);
-	glutCreateWindow("view");
-	glutDisplayFunc(display);
+	glutInitDisplayMode(GLUT_SINGLE|GLUT_RGB|GLUT_DEPTH);
+	glutInitWindowSize(640,480);
+	glutInitWindowPosition(100,100);
+	glutCreateWindow("teapot");
+	glutDisplayFunc(displaySolid);
+	glEnable(GL_LIGHTING);
+	glEnable(GL_LIGHT0);
+	glShadeModel(GL_SMOOTH);
 	glEnable(GL_DEPTH_TEST);
-	glutKeyboardFunc(keys);
+	glEnable(GL_NORMALIZE);
+	glClearColor(1,1,1,0.0);
+	glViewport(0,0,640,480);
 	glutMainLoop();
 }
-
-		
