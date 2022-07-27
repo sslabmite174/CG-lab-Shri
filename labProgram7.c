@@ -1,138 +1,100 @@
 #include<stdio.h>
-#include<stdbool.h>
 #include<GL/glut.h>
-float xmin,xmax,ymin,ymax;
-float xvmin=200,yvmin=200,xvmax=300,yvmax=300;
-float x0,x1,y0,y1;
-const int RIGHT = 2;
-const int LEFT = 1;
-const int TOP = 8;
-const int BOTTOM = 4;
+typedef float point[3];
+point v[] = 	{
+		{0.0, 0.0, 1.0},
+		{0.0, 1.0, 0.0},
+		{-1.0, -0.5, 0.0},
+		{1.0, -0.5, 0.0}
+		};
+float colors[4][3] = 	{
+			{1.0, 0.0, 0.0},
+			{0.0, 1.0, 0.0},
+			{0.0, 0.0, 1.0},
+			{0.0, 0.0, 0.0},
+			};
+int n;
 
-void drawLine(){
-  glBegin(GL_LINES);
-  glVertex2f(x0,y0);
-  glVertex2f(x1,y1);
-  glEnd();
-}
-
-void drawRect(){
-  glBegin(GL_LINE_LOOP);
-  glVertex2f(xmin,ymin);
-  glVertex2f(xmax,ymin);
-  glVertex2f(xmax,ymax);
-  glVertex2f(xmin,ymax);
-  glEnd();
-}
-int computeOutCode(float x,float y){
-  int code = 0;
-  if(y > ymax)
-  	code= code|TOP;
-  else if( y < ymin)
-	  code = code|BOTTOM;
-  if(x>xmax)
-	  code =code|RIGHT;
-  else if(x< xmin)
-	  code = code|LEFT;
-  return code;
-}
-
-void CSLAD(float x0,float y0,float x1,float y1){
-  int outcode0,outcode1,outcodeout;
-  bool accept = false,done = false;
-  outcode0 = computeOutCode(x0,y0);
-  outcode1 = computeOutCode(x1,y1);
-  do{
-	  if((outcode0 || outcode1)==0){
-		  accept = true;
-		  done = true;
-	  }
-	  else if((outcode0 & outcode1) !=0)
-		  done = true;
-	  else{
-		  double x,y;
-		  outcodeout = outcode0 ? outcode0 :outcode1;
-		  if(outcodeout &TOP){
-			  x = x0+(x1-x0)*(ymax-y0)/(y1-y0);
-			  y = ymax;
-		  }
-		  else if(outcodeout & BOTTOM){
-			  x = x0+(x1-x0)*(ymin-y0)/(y1-y0);
-			  y = ymin;
-		  }
-		  else if(outcodeout & RIGHT){
-			  y = y0+(y1-y0)*(xmax-x0)/(x1-x0);
-			  x = xmax;
-		  }
-		  else{
-			  y = y0+(y1-y0)*(xmin-x0)/(x1-x0);
-			  x = xmin;
-		  }
-		  if(outcodeout == outcode0){
-			  x0 = x;
-			  y0 = y;
-			  outcode0 = computeOutCode(x0,y0);
-		  }
-		  else{
-			  x1=x;
-			  y1=y;
-			  outcode1 = computeOutCode(x1,y1);
-		  }
-	  }
-  }while(!done);
-  if(accept){
-	double Sx = (xvmax-xvmin)/(xmax-xmin);
-	double Sy = (yvmax-yvmin)/(ymax-ymin);
-	double Vx0  = xvmin + (x0-xmin)*Sx;
-	double Vy0  = yvmin + (y0-xmin)*Sy;
-	double Vx1  = xvmin + (x1-xmin)*Sx;
-	double Vy1  = yvmin + (y1-xmin)*Sx;
-	glColor3f(0.0,0.0,1.0);
-	glBegin(GL_LINES);
-	glVertex2d(Vx0,Vy0);
-	glVertex2d(Vx1,Vy1);
+void triangle(point a, point b, point c){
+	glBegin(GL_TRIANGLES);
+	glVertex3fv(a);
+	glVertex3fv(b);
+	glVertex3fv(c);
 	glEnd();
-   }
-   glColor3f(1.0,0.0,0.0);
-   glBegin(GL_LINE_LOOP);
-   glVertex2f(xvmin,yvmin);
-   glVertex2f(xvmax,yvmin);
-   glVertex2f(xvmax,yvmax);
-   glVertex2f(xvmin,yvmax);
-   glEnd();
 }
 
-void myInit(){
-	glClearColor(1.0,1.0,1.0,1.0);
-	glClear(GL_COLOR_BUFFER_BIT);
-	glColor3f(1.0,0.0,0.0);
-	glPointSize(1.0);
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	gluOrtho2D(0.0,499.0,0.0,499.0);
+/*void tetra(float *a, float *b, float *c, float *d){
+	glColor3fv(colors[0]);
+	triangle(a,b,c); 
+	glColor3fv(colors[1]);
+	triangle(a,c,d);
+	glColor3fv(colors[2]);
+	triangle(a,d,b);
+	glColor3fv(colors[3]);
+	triangle(b,d,c);
+}
+*/
+void divide_tetra(point a, point b, point c, int m){
+	point v1,v2,v3;
+	int j;
+	if(m>0){
+		for(j=0;j<3;j++){
+			v1[j] = (a[j]+b[j])/2;
+			v2[j] = (a[j]+c[j])/2;
+			v3[j] = (b[j]+c[j])/2;
+			
+		}
+		divide_tetra(a,v1,v2,m-1);
+		divide_tetra(c,v2,v3,m-1);
+		divide_tetra(b,v3,v1,m-1);
+	}
+	else
+		triangle(a,b,c);
 }
 
-void display(){
+void tetrahedron(int m){
 	glColor3f(1.0,0.0,0.0);
-	drawLine();
+	divide_tetra(v[0],v[1],v[2],m);
+	glColor3f(0.0,1.0,0.0);
+	divide_tetra(v[3],v[2],v[1],m);
 	glColor3f(0.0,0.0,1.0);
-	drawRect();
-	CSLAD(x0,y0,x1,y1);
+	divide_tetra(v[0],v[3],v[1],m);
+	glColor3f(0.0,0.0,0.0);
+	divide_tetra(v[0],v[2],v[3],m);
+}
+
+void display(void){
+	glClearColor(1.0, 1.0, 1.0, 1.0);
+	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+        tetrahedron(n);
 	glFlush();
 }
 
-int main(int argc,char *argv[]){
-	printf("Enter the endpoints of the clipping window:\n");
-	scanf("%f%f%f%f",&xmin,&ymin,&xmax,&ymax);
-	printf("Enter the endpoints:\n");
-	scanf("%f%f%f%f",&x0,&y0,&x1,&y1);
-	glutInit(&argc,argv);
-	glutInitDisplayMode(GLUT_SINGLE|GLUT_RGB);
+void myReshape(int w, int b){
+	glViewport(0, 0, w, b);
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	if(w<=b)
+		glOrtho(-2.0, 2.0, -2.0*(float)b/(float)w, 2.0*(float)b/(float)w, -10.0, 10.0);
+	else
+		glOrtho(-2.0*(float)b/(float)w, 2.0*(float)b/(float)w, -2.0, 2.0, -10.0, 10.0);
+	glMatrixMode(GL_MODELVIEW);
+	glutPostRedisplay();
+}
+
+int main(int argc, char *argv[]){
+	printf("Enter the no. of division: ");
+	scanf("%d", &n); 
+	glutInit(&argc, argv);
+	glutInitDisplayMode(GLUT_SINGLE|GLUT_RGB | GLUT_DEPTH);
 	glutInitWindowSize(500,500);
-	glutInitWindowPosition(0,0);
-	glutCreateWindow("Cohen Sutherland algorithm");
+	glutCreateWindow("3D gasket");
+	glutReshapeFunc(myReshape);
 	glutDisplayFunc(display);
-	myInit();
+	glEnable(GL_DEPTH_TEST);
 	glutMainLoop();
 	return 0;
 }
+
+		
+		
