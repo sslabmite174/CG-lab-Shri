@@ -1,95 +1,108 @@
 #include<stdio.h>
 #include<GL/glut.h>
-float x1,x2,x3,x4,y1,y2,y3,y4;
-int le[500], re[500];
-void edgeDetect(float x1, float y1, float x2, float y2) {
-	int i;
-	float mx, x, temp;
-	if((y2-y1)<0) {
-		temp=y1; y1=y2; y2=temp;
-		temp=x1; x1=x2; x2=temp;
-	}
-	if ((y2-y1) != 0)
-		mx = (x2-x1)/(y2-y1);
-	else
-		mx = x2 - x1;
-	x = x1;
-	for (i=y1; i<=y2; i++) {
-		if (x<le[i])
-			le[i] = x;
-		if (x>re[i]) 
-			re[i] = x;
-		x+=mx;
-	}
+
+float theta[3]={0.0, 0.0, 0.0};
+int axis=0;
+float vertices[8][3]={
+	{-1.0, -1.0, -1.0},
+	{1.0, -1.0, -1.0},
+	{1.0, 1.0, -1.0},
+	{-1.0, 1.0, -1.0},
+	{-1.0, -1.0, 1.0},
+	{1.0, -1.0, 1.0},
+	{1.0, 1.0, 1.0},
+	{-1.0, 1.0, 1.0},
+};
+float colors[8][3]={
+	{0.0, 0.0, 0.0},
+	{1.0, 0.0, 0.0},
+	{1.0, 1.0, 0.0},
+	{0.0, 1.0, 0.0},
+	{0.0, 0.0, 1.0},
+	{1.0, 0.0, 1.0},
+	{1.0, 1.0, 1.0},
+	{0.0, 1.0, 1.0},
+};
+
+void polygon(int a, int b, int c, int d){
+	glBegin(GL_POLYGON);
+	
+	glColor3fv(colors[a]);
+	glVertex3fv(vertices[a]);
+	
+	glColor3fv(colors[b]);
+	glVertex3fv(vertices[b]);
+	
+	glColor3fv(colors[c]);
+	glVertex3fv(vertices[c]);
+	
+	glColor3fv(colors[d]);
+	glVertex3fv(vertices[d]);
+	
+	glEnd();
 }
-void scanfill(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4) {
-	int i, y;
-	for (i=200; i<=400; i++) {
-		le[i] = 500;
-		re[i] = 0;
-	}
-	edgeDetect(x1, y1, x2, y2);
-	edgeDetect(x2, y2, x3, y3);
-	edgeDetect(x3, y3, x4, y4);
-	edgeDetect(x1, y1, x4, y4);
-	for (y=200; y<=400; y++) {
-		for (i=le[y]; i<=re[y]; i++) {
-			glColor3f(1.0, 0.0, 1.0);
-			glBegin(GL_POINTS);
-			glVertex2i(i, y);
-			glEnd();
-			glFlush();
-		}
-	}
+
+void colorcube(void){
+	polygon(0,3,2,1);
+	polygon(2,3,7,6);
+	polygon(0,4,7,3);
+	polygon(1,2,6,5);
+	polygon(4,5,6,7);
+	polygon(0,1,5,4);
 }
-void display() {
-	x1=200; y1=200; x2=100; y2=300; x3=200; y3=400; x4=300; y4=300;
+
+void display(){
+	glClearColor(1.0,1.0,1.0,1.0);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glLoadIdentity();
+	glRotatef(theta[0], 1.0, 0.0, 0.0);
+	glRotatef(theta[1], 0.0, 1.0, 0.0);
+	glRotatef(theta[2], 0.0, 0.0, 1.0);
+	colorcube();
 	glFlush();
+	glutSwapBuffers();
 }
-void myInit() {
-	glClearColor(1.0, 1.0, 1.0, 1.0);
-	glClear(GL_COLOR_BUFFER_BIT);
+
+void spincube(){
+	theta[axis]+=1;
+	if(theta[axis] > 360.0)
+		theta[axis]=0;
+	glutPostRedisplay();
+}
+
+void mouse(int btn, int state, int x, int y){
+	if(btn == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
+		axis=0;
+	if(btn == GLUT_MIDDLE_BUTTON && state == GLUT_DOWN)
+		axis=1;
+	if(btn == GLUT_RIGHT_BUTTON && state == GLUT_DOWN)
+		axis=2;
+	spincube();
+}
+
+void myReshape(int w, int b){
+	glViewport(0, 0, w, b);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	gluOrtho2D(0.0, 500.0, 0.0, 500.0);
+	if(w<=b)
+		glOrtho(-5.0, 5.0, -5.0*(float)b/(float)w, 5.0*(float)b/(float)w, -10.0, 10.0);
+	else
+		glOrtho(-5.0*(float)b/(float)w, 5.0*(float)b/(float)w, -5.0, 5.0, -10.0, 10.0);
 	glMatrixMode(GL_MODELVIEW);
+	glutPostRedisplay();
 }
-void fillMenu(int choice) {
-	switch (choice) {
-		case 1:
-			glColor3f(0.0, 0.0, 1.0);
-			glBegin(GL_LINE_LOOP);
-			glVertex2i(x1, y1);
-			glVertex2i(x2, y2);
-			glVertex2i(x3, y3);
-			glVertex2i(x4, y4);
-			glEnd();
-			glFlush();
-		break;
-		case 2:
-			glColor3f(0.0, 0.0, 1.0);
-			glBegin(GL_LINE_LOOP);
-			glVertex2i(x1, y1);
-			glVertex2i(x2, y2);
-			glVertex2i(x3, y3);
-			glVertex2i(x4, y4);
-			glEnd();
-			scanfill(x1, y1, x2, y2, x3, y3, x4, y4);
-			glFlush();
-		break;
-	}
-}
-void main(int argc, char* argv[]) {
+
+int main(int argc, char *argv[]){
 	glutInit(&argc, argv);
-	glutInitDisplayMode(GLUT_SINGLE|GLUT_RGB);
-	glutInitWindowSize(500, 500);
-	glutInitWindowPosition(0, 0);
-	glutCreateWindow("Scan-line Algorithm");
+	glutInitDisplayMode(GLUT_SINGLE|GLUT_RGB | GLUT_DEPTH);
+	glutInitWindowSize(500,500);
+	glutInitWindowPosition(0,0);
+	glutCreateWindow("Cube spin");
+	glutReshapeFunc(myReshape);
 	glutDisplayFunc(display);
-	myInit();
-	glutCreateMenu(fillMenu);
-	glutAddMenuEntry("Draw a polygon", 1);
-	glutAddMenuEntry("Fill the polygon", 2);
-	glutAttachMenu(GLUT_RIGHT_BUTTON);
+	glutIdleFunc(spincube);
+	glutMouseFunc(mouse);
+	glEnable(GL_DEPTH_TEST);
 	glutMainLoop();
+	return 0;
 }
